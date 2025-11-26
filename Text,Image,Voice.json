@@ -1,0 +1,1039 @@
+{
+  "name": "Text,Image,Voice",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1520,
+        304
+      ],
+      "id": "c2b00baa-5c2d-493f-99f6-03a55931b3de",
+      "name": "Telegram Trigger",
+      "webhookId": "d7ac593a-0dea-4bed-8f40-d7ad3df87ac0",
+      "credentials": {
+        "telegramApi": {
+          "id": "0FhwLM2FaRujGbwS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# ROLE\nYou are friendly and helpful assistant called Usep.\nKeep your answer short and to the point.\n\n# ADDITIONAL INFORMATION \nYou are currently chatting to {{ $('Telegram Trigger').item.json.message.from.last_name }}\nCurrent date and time: {{ $now }}\n\n#TOOL SUPABASE\nIf there is a text message, try looking for the answer in the Supabase tool. Answer according to what is in the database.\n\n#SEND TEXT\nDon't use characters like * and ** or Dot or others when sending text, just replace them with numbers or alphabets.\n\n#VOICE AUDIO\nIf there is audio voice that has been analyzed to become a question text, try looking for the answer in the data tool in Supabase first.\n\n# TOOL\n## Get Emails\nUse this tool to retrieve any unread emails from Gmail.\nIn your response, provide the following:\n- a summary of the body content\n- the from email address\n- the name of the person\n\n## Send Email\nUse this tool to send an email. It requires the recipient email address, subject and email body.\n\n## Get Calendar\nUse this tool to retrieve calendar events.\n\n## Set Calendar\nUse this tool to create new calendar events\n\n## Contacts\nUse this tool to retrieve contacts information about contacts, like their email addresses\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -608,
+        304
+      ],
+      "id": "789261b3-9728-40db-b669-b90c062d8a0b",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        480
+      ],
+      "id": "d4e6dccd-2fff-4704-af8d-ae19f38f5cda",
+      "name": "Send a text message",
+      "webhookId": "5ffd0abf-8a05-4ccf-b269-58d5a5cf8ec6",
+      "credentials": {
+        "telegramApi": {
+          "id": "0FhwLM2FaRujGbwS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "279c3221-491e-4202-bc42-ab8a4f5c081a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6fcdbcb9-b56c-4d5d-80f1-0cba374bec46",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9a6340ec-55f1-4470-b887-a9f7d5af14b1",
+                    "leftValue": "={{ $json.message.photo }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "array",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Image"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -1312,
+        288
+      ],
+      "id": "960fb81e-6c35-40c1-a102-0c48b6da2fb6",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        80
+      ],
+      "id": "4424d52c-2eda-4b3d-9437-2ea8de4965ba",
+      "name": "Get Voice",
+      "webhookId": "2aa100f0-537d-4a6a-ac2f-9ccaefc78f44",
+      "credentials": {
+        "telegramApi": {
+          "id": "0FhwLM2FaRujGbwS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        80
+      ],
+      "id": "fc358ef4-273c-444e-b46f-73ac54b8462d",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4l4zFxONKO9V5oUC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "878f2482-f1c2-4454-bee0-2f65010d42c1",
+              "leftValue": "={{ $('Telegram Trigger').item.json.message.voice.file_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -240,
+        304
+      ],
+      "id": "43366a8a-de96-44d8-a08c-4b91f064a723",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -688,
+        464
+      ],
+      "id": "d27bf1a2-dee2-4ab3-a185-c2754919c784",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4l4zFxONKO9V5oUC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        800,
+        208
+      ],
+      "id": "c201f398-f68d-4c16-b9f5-f23ba8a0e6b1",
+      "name": "Send an audio file",
+      "webhookId": "4b6045df-aeaa-4281-983f-9dcb8f396b62",
+      "credentials": {
+        "telegramApi": {
+          "id": "0FhwLM2FaRujGbwS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "input": "={{ $json.output }}",
+        "voice": "nova",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -32
+      ],
+      "id": "2084ee4c-160c-4f4f-8958-4751a316880b",
+      "name": "Generate audio",
+      "credentials": {
+        "openAiApi": {
+          "id": "3WPAijiomBbCmuvq",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[3].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        640
+      ],
+      "id": "e919a21c-21d8-4c89-abec-f581956c5b61",
+      "name": "Ambil Gambar",
+      "webhookId": "403ae2ce-fb3c-416c-9cf3-f7aa223dfa60",
+      "credentials": {
+        "telegramApi": {
+          "id": "0FhwLM2FaRujGbwS",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "=Berikan Singkat Saja\n{{ $('Telegram Trigger').item.json.message.caption || \"Describe The Imager\" }}",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        640
+      ],
+      "id": "ff5d4918-d365-49c8-b513-9e41d96ce997",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4l4zFxONKO9V5oUC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3fb7f5f-ff3a-4d6c-bfd7-e29d276ee0a5",
+              "name": "output",
+              "value": "={{ $json.cleanText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        640
+      ],
+      "id": "a0aba57a-ce2a-43b8-9aad-5dbc65d05a15",
+      "name": "Ubah Jadi Output"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        464
+      ],
+      "id": "cfa3b3d0-599e-4182-81a1-083de8fc001c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 2,
+        "filters": {
+          "labelIds": [
+            "INBOX",
+            "UNREAD"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        976
+      ],
+      "id": "24856977-9951-40e5-b184-4c10ff151551",
+      "name": "Baca Email",
+      "webhookId": "e8411471-f0df-4724-9ef3-673dc7f8935e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "z92U5jTUBtInTFQR",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI('email_address', 'The recipient email address') }}",
+        "subject": "={{ $fromAI('email_subject', 'The email subject line') }}",
+        "emailType": "text",
+        "message": "={{ $fromAI('email_body', 'The email body') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        -608,
+        976
+      ],
+      "id": "6a2e5397-62cf-46be-bfdb-483b77d308d5",
+      "name": "Kirim Email",
+      "webhookId": "7df89b09-e545-4096-815b-21498743441d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "z92U5jTUBtInTFQR",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $input.first().json.content.parts[0].text; // atau ganti dengan field yang kamu pakai\n\n// Hapus karakter Markdown yang bisa bikin error\ntext = text.replace(/[*_~`>#+=|{}[\\]()]/g, ''); // hapus simbol berbahaya\n\n// Opsional: ubah newline jadi spasi atau <br>\ntext = text.replace(/\\n/g, ' ');\n\n// Kembalikan teks bersih\nreturn {\n  json: {\n    cleanText: text\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -608,
+        640
+      ],
+      "id": "106bc3bc-1427-4402-b91e-35b64f8d4544",
+      "name": "Hapus Karakter"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "morissabsolute@gmail.com",
+          "mode": "list",
+          "cachedResultName": "morissabsolute@gmail.com"
+        },
+        "start": "={{ $fromAI('start') }}",
+        "end": "={{ $fromAI('end') }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI('email_title') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        976
+      ],
+      "id": "41ae6149-e572-4021-bcc6-e86c697e2d71",
+      "name": "Buat Acara",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Rt0Xgn7hIIxvDUYq",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "morissabsolute@gmail.com",
+          "mode": "list",
+          "cachedResultName": "morissabsolute@gmail.com"
+        },
+        "limit": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -480,
+        976
+      ],
+      "id": "ca1a46e0-8bf2-4216-a99f-3dfb5e45999f",
+      "name": "Dapatkan Acara",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Rt0Xgn7hIIxvDUYq",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "444aab93-327a-4535-b929-4269b10e3d15",
+              "name": "text",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -768,
+        80
+      ],
+      "id": "13645dc2-3ca6-4445-9545-c9a62f519a6c",
+      "name": "Ubah Jadi Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "977195f1-d0e6-46ca-b8b4-f56a00e397ab",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -944,
+        304
+      ],
+      "id": "c4b1ffa7-5a9d-448c-8b00-03711906fb09",
+      "name": "Ubah Jadi Text1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qwen-qwen-tts-demo.hf.space/gradio_api/call/predict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": [\n    \"{{ $json.output }}\",\n    \"Dylan\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        304,
+        -32
+      ],
+      "id": "c237c0c6-5201-4fa0-8e23-9276583da023",
+      "name": "Qwen TTS"
+    },
+    {
+      "parameters": {
+        "url": "=https://qwen-qwen-tts-demo.hf.space/gradio_api/call/predict/{{ $json.event_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        208
+      ],
+      "id": "5604a1a3-21fd-4f1b-8bcf-122137383d11",
+      "name": "Qwen TTS Generate to WAV"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\nconst text = raw.data || raw; // jika data ada di dalam properti 'data'\n\nconst match = typeof text === 'string' && text.match(/\"url\":\\s*\"([^\"]+)\"/);\n\nif (match && match[1]) {\n  return {\n    json: {\n      audioUrl: match[1]\n    }\n  };\n} else {\n  return {\n    json: {\n      error: \"URL tidak ditemukan\"\n    }\n  };\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        208
+      ],
+      "id": "2b3ae561-25ff-44be-9071-b2d1d5afda1a",
+      "name": "Ambil Url .Wav"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.audioUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        624,
+        208
+      ],
+      "id": "c4979f7e-a687-4152-8eda-3b32a42fcd4a",
+      "name": "Jadi Response Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qwen-qwen-tts-demo.hf.space/gradio_api/call/predict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        208
+      ],
+      "id": "fa6325ea-954b-423a-a180-6f691216251e",
+      "name": "Qwen TTS1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        1008
+      ],
+      "id": "22d4d15e-5b74-44a9-92c2-300296b22b4d",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "4l4zFxONKO9V5oUC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Sebagai Warung Selera Nusantara, Menjawab Data Profil dummy sesuai data yang ada",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        832
+      ],
+      "id": "c2b874d9-8ec9-43b8-b0a2-58a3ae8f12ca",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "w9kp3Ld3oeVsGDd4",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        272,
+        976
+      ],
+      "id": "90e7adc8-a1e3-444a-95e0-58509dd9901c",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "Dn4HEjorrDNNxH9g",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return { json: { data: [$json.output, 'Dylan'] } };"
+      },
+      "id": "2cf044a6-f362-4fd4-a7af-02a806460aa2",
+      "name": "JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get Voice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ubah Jadi Text1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ambil Gambar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Voice": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Ubah Jadi Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil Gambar": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Hapus Karakter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ubah Jadi Output": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baca Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kirim Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hapus Karakter": {
+      "main": [
+        [
+          {
+            "node": "Ubah Jadi Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buat Acara": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dapatkan Acara": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ubah Jadi Text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ubah Jadi Text1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qwen TTS": {
+      "main": [
+        []
+      ]
+    },
+    "Qwen TTS Generate to WAV": {
+      "main": [
+        [
+          {
+            "node": "Ambil Url .Wav",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ambil Url .Wav": {
+      "main": [
+        [
+          {
+            "node": "Jadi Response Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jadi Response Data": {
+      "main": [
+        [
+          {
+            "node": "Send an audio file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qwen TTS1": {
+      "main": [
+        [
+          {
+            "node": "Qwen TTS Generate to WAV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON": {
+      "main": [
+        [
+          {
+            "node": "Qwen TTS1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "53ec558a-3df1-48be-aeb4-affa7c1b14a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9d78123a559dfada1537e99da9a44a3beaf06549f331b315b76ff29408b056e5"
+  },
+  "id": "EqCYkrV4Adlx2Nfv",
+  "tags": []
+}

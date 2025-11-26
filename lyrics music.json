@@ -1,0 +1,159 @@
+{
+  "name": "lyrics music",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          {
+            "updateType": "message"
+          }
+        ],
+        "additionalFields": {}
+      },
+      "id": "8f56316c-a39a-48fc-8f6d-fc650d016eea",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        464,
+        272
+      ],
+      "webhookId": "0492e62b-1456-4afd-9c1b-366ce9d75c0e",
+      "credentials": {
+        "telegramApi": {
+          "id": "eqBkJDjG5rdBgo4U",
+          "name": "Nutrisi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const text = $json[\"message\"][\"text\"]?.trim() || \"\";\nif (!text) return [{ artist: \"Unknown\", song: \"Unknown\" }];\n\nconst parts = text.split(\" \");\nconst artist = parts[0];\nconst song = parts.slice(1).join(\" \") || \"Unknown\";\n\nreturn [{\n  artist,\n  song,\n  encodedArtist: encodeURIComponent(artist),\n  encodedSong: encodeURIComponent(song)\n}];\n"
+      },
+      "id": "8075429c-5b8c-4b72-afa1-e07a40dca9c7",
+      "name": "Extract Artist & Song",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        768,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.lyrics.ovh/v1/{{$json[\"encodedArtist\"]}}/{{$json[\"encodedSong\"]}}",
+        "options": {}
+      },
+      "id": "af476eb1-5746-4c33-9a05-4877e0d7e38e",
+      "name": "Get Lyrics (HTTP Request)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1072,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=🎵 *Lirik Lagu Ditemukan!* 🎶\n\n🎤 Penyanyi: {{$node[\"Extract Artist & Song\"].json[\"artist\"]}}\n\n🎧 Judul: {{$node[\"Extract Artist & Song\"].json[\"song\"]}}\n\n📝 {{$json[\"shortLyrics\"] || \"Lirik tidak tersedia 😔\"}}\n",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "aa44291c-1d86-431f-8c32-c7a782c1df65",
+      "name": "Send Lyrics to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        272
+      ],
+      "webhookId": "d024951c-5a2e-435d-8d66-befc23d7fb55",
+      "credentials": {
+        "telegramApi": {
+          "id": "eqBkJDjG5rdBgo4U",
+          "name": "Nutrisi"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "let lyrics = $node[\"Get Lyrics (HTTP Request)\"].json.lyrics || \"Lirik tidak tersedia 😔\";\n\n// Potong lirik: ambil reff/chorus atau 5 baris pertama\nconst lines = lyrics.split('\\n');\nlet shortLyrics = lines.find(line =>\n  line.toLowerCase().includes('reff') || line.toLowerCase().includes('chorus')\n);\nif (!shortLyrics) shortLyrics = lines.slice(0,5).join('\\n');\n\n// Kembalikan data\nreturn [{\n  artist: $json.artist || \"Tidak diketahui\",\n  song: $json.song || \"Tidak diketahui\",\n  album: \"-\",\n  genre: \"-\",\n  releaseDate: \"-\",\n  artwork: \"-\",\n  lyrics,\n  shortLyrics,\n  encodedArtist: encodeURIComponent($json.artist || \"unknown\"),\n  encodedSong: encodeURIComponent($json.song || \"unknown\")\n}];\n"
+      },
+      "id": "c4a6ef1f-418b-45ba-8a73-03b37c05922f",
+      "name": "Process Lyrics (Shorten)1",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        352
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Artist & Song",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Artist & Song": {
+      "main": [
+        [
+          {
+            "node": "Get Lyrics (HTTP Request)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Lyrics (HTTP Request)": {
+      "main": [
+        [
+          {
+            "node": "Process Lyrics (Shorten)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Lyrics (Shorten)1": {
+      "main": [
+        [
+          {
+            "node": "Send Lyrics to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e38f8a77-01f5-4452-9d75-1aa94cfd6b81",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f720b8c94433bbf6f8300c0af8c166078b9a1f94f7818df83f7a37509e95263b"
+  },
+  "id": "tIRvLQMFjqDZba0N",
+  "tags": [
+    {
+      "updatedAt": "2025-11-05T09:01:25.965Z",
+      "createdAt": "2025-11-05T09:01:25.965Z",
+      "id": "LqB8yn7VgWezQRuK",
+      "name": "music"
+    }
+  ]
+}

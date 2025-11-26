@@ -1,0 +1,729 @@
+{
+  "name": "/FAQ",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        1760
+      ],
+      "id": "862cf894-300a-4c6b-b9f9-5f5677608f42",
+      "name": "Telegram Trigger",
+      "webhookId": "a7814450-f365-4e2d-a259-7a69bc32f34d",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        1392
+      ],
+      "id": "77f0f395-03d7-4ff3-aa75-c3d8d248f3e5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UaWRw3p4YhBwmkm2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=Kamu adalah MIMIN, asisten AI dari Bengkel Pintar. Gunakan bahasa Indonesia yang santai dan panggil pengguna dengan sapaan 'kak'{{ $json.message.chat.first_name }}. Bengkel kami bernama Bengkel Pintar.\n\n🧠 Tugasmu sebagai MIMIN:\nSapa pengguna dengan \"Halo kak ada yang bisa kami bantu ?\" HANYA di awal percakapan atau jika pengguna memulai topik baru/sapaan pembuka. Untuk balasan selanjutnya dalam satu alur percakapan, langsung berikan informasi tanpa sapaan pembuka lagi.\n\nJawab pertanyaan umum berdasarkan data FAQ dari Google Sheets. Gunakan tool \"Data_Bengkel\" untuk mengecek data. Cocokkan pertanyaan pengguna dengan kolom \"Pertanyaan\", lalu berikan jawaban dari kolom \"Jawaban\".\n\nJika pertanyaan tidak ditemukan di data, beri tahu bahwa pertanyaannya belum tersedia dan tawarkan bantuan lain.\n\nJika pertanyaan tentang biaya servis, ketersediaan sparepart, atau booking layanan, dan tidak ada detail di data, arahkan pengguna untuk menghubungi WhatsApp resmi.\n\nBerikan respon yang rapi dan mudah dibaca. Jangan gunakan format teks seperti bold atau italic, dan untuk link sertakan URL lengkapnya secara langsung (jangan gunakan format Markdown teks).\n\nDi akhir setiap balasan, tawarkan bantuan lain dengan kalimat yang bervariasi dan santai.\n\nJika topik pembicaraan sudah selesai, tutup dengan kalimat \"Terima Kasih\".\n\nJika pengguna menanyakan layanan atau produk bengkel, tampilkan 10 layanan/sparepart yang tersedia dari data, dan sebutkan total layanan yang tersedia."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        64,
+        1168
+      ],
+      "id": "b947b150-ecfa-4bef-8a14-6139992903c7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        1280
+      ],
+      "id": "89a20357-d25f-410c-a10a-75c7bae3a0db",
+      "name": "Send a text message",
+      "webhookId": "a0c3f0ba-d275-41e2-adeb-0b567c2a8607",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        416,
+        1568
+      ],
+      "id": "b1767492-8179-4f9d-8462-527988c40b9c",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBLEcxrFsnY9BrzQ9UFlJTuExPn3S5kkjU",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Jelaskan isi gambar ini secara singkat dalam bahasa Indonesia.\"\n        },\n        {\n          \"inlineData\": {\n            \"mimeType\": \"image/jpeg\",\n            \"data\": \"{{ $json.data }}\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        640,
+        1568
+      ],
+      "id": "63c687c8-4420-49cf-b232-6c827e0beac9",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[2].file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        1568
+      ],
+      "id": "c2829438-1544-4d35-903c-93c96e49bc9f",
+      "name": "Get a file",
+      "webhookId": "0500c1d8-2374-44d2-8b70-84d55c8e99a9",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.candidates[0].content.parts[0].text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        1568
+      ],
+      "id": "3479cd1d-b83b-490b-917f-af1d45984a85",
+      "name": "Send a text message1",
+      "webhookId": "25800d1e-a92a-46db-b790-2732796a2133",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7e0578ce-d79b-451e-b8d0-84af92b0824a",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/faq",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.photo[2] }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "51f829f3-f71e-4b43-9d8b-edc9ccabb930"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f4d2774e-f7c4-40c9-b313-714a7e2b1e2d",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "=/booking",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "66ac0d47-9bfb-4e7d-b4c5-93face2b089c",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -160,
+        1728
+      ],
+      "id": "07d35c54-80b6-456c-a6f9-92fc4bc07f4e",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ",
+          "mode": "list",
+          "cachedResultName": "Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        1392
+      ],
+      "id": "d12b2d16-ffd5-4f8b-8c32-6d1b25830166",
+      "name": "Data_Bengkel",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KeI63vpIZAOQLzJa",
+          "name": "Testing"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        144,
+        2032
+      ],
+      "id": "ce6190c4-2a8f-49e2-8722-b19372f51c94",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "3CdHATpqGBqnUgIk",
+          "name": "Test Nano Banana"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "=TUGAS: Analisa Booking Servis dan ubah menjadi format PERSIS seperti ini:\n\nPELANGGAN: [nama pelanggan dari text, jika tidak ada tulis '{{ $json.message.chat.first_name }}']\nTANGGAL_BOOKING: [tanggal booking, jika tidak disebutkan gunakan '{{ $now.format('yyyy-MM-dd') }}']\nJENIS_SERVIS: [jenis servis yang ingin dilakukan]\nNOTES: [catatan tambahan jika ada, jika tidak ada tulis '-']\n\nCONTOH:\nPELANGGAN: John\nTANGGAL_BOOKING: 2025-11-05\nJENIS_SERVIS: Servis Oli\nJAM_SERVIS: 15.00 WIB\nNOTES: -\n\nINPUT: \"booking ganti ban motor Pak Budi untunk hari senin jam 3 sore\"\nPELANGGAN: Pak Budi\nTANGGAL_BOOKING: {{ $now.format('yyyy-MM-dd') }}\nJENIS_SERVIS: Ganti Ban\nJAM_SERVIS: 15.00 WIB\nNOTES: -\n\nINPUT: mau servis lengkap motor saya besok pagi\nPELANGGAN: Manual Input\nTANGGAL_BOOKING: {{ $now.format('yyyy-MM-dd') }}\nJENIS_SERVIS: Servis Lengkap\nJAM_SERVIS: 10.00 WIB\nNOTES: -\n\nJika tidak bisa dipahami, berikan:\nERROR: Text booking tidak dapat dipahami\n\nPENTING: Hanya berikan response dalam format di atas!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        64,
+        1808
+      ],
+      "id": "92608c03-49bb-4f22-bafe-794abac6aeee",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6a1a8689-d491-40d9-9a9d-d592c8157ea4",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "ERROR:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        1920
+      ],
+      "id": "7d3f12f9-4906-43e6-9535-31546dc9565a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=❌ Tidak dapat memahami input booking bengkel\n\nContoh format yang benar:\n• \"booking servis oli untuk motor John pada 2025-11-05\"\n• \"booking ganti ban motor Pak Budi\"\n• \"mau servis lengkap motor saya besok\"\n• \"booking tune-up motor saya di Toko Budi\"\n\n💡 Tips:\n\nSebutkan nama pelanggan (opsional, bisa diisi “Manual Input”)\n\nSertakan tanggal booking (opsional, gunakan {{ $now.format('yyyy-MM-dd') }} jika tidak ada)\n\nSebutkan jenis servis yang ingin dilakukan\n\nCoba lagi dengan format yang lebih jelas atau klik /help untuk bantuan! 📝",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        1824
+      ],
+      "id": "310882e4-cf84-40ef-bef3-b002773c9da6",
+      "name": "Send a text message2",
+      "webhookId": "639e1298-649c-43c9-92d9-0191bfa7a1e5",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ",
+          "mode": "list",
+          "cachedResultName": "Testing",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1465796750,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ES52Mbn5ZpxQxcqqmDI5XvEEpmp2PPkPkcY8dt97dgQ/edit#gid=1465796750"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "WAKTU_INPUT": "={{ $now.format('HH:mm:ss') }}",
+            "PELANGGAN": "={{ $json.output.match(/PELANGGAN: (.+)/)[1] }}",
+            "TANGGAL_BOOKING": "={{ $json.output.match(/TANGGAL_BOOKING: (.+)/)[1] }}",
+            "JENIS_SERVICE": "={{ $json.output.match(/JENIS_SERVIS: (.+)/)[1] }}",
+            "NOTES": "={{ $json.output.match(/NOTES: (.+)/)[1] }}",
+            "JAM_SERVICE": "={{ $json.output.match(/JAM_SERVIS: (.+)/)[1] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "PELANGGAN",
+              "displayName": "PELANGGAN",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TANGGAL_BOOKING",
+              "displayName": "TANGGAL_BOOKING",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JENIS_SERVICE",
+              "displayName": "JENIS_SERVICE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "JAM_SERVICE",
+              "displayName": "JAM_SERVICE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOTES",
+              "displayName": "NOTES",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "WAKTU_INPUT",
+              "displayName": "WAKTU_INPUT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        2016
+      ],
+      "id": "acbf9c97-0689-40ba-a0f5-9ebdda45c462",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KeI63vpIZAOQLzJa",
+          "name": "Testing"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ Data booking bengkel berhasil disimpan!\\n  \n\n👤 Pelanggan: {{ $json.PELANGGAN }} \n📅 Tanggal Booking: {{ $json.TANGGAL_BOOKING }} \n🛠️ Jenis Servis: {{ $json.JENIS_SERVICE }} \n📊 JAM SERVICE: {{ $json.JAM_SERVICE }}\n📝 Notes: {{ $json.NOTES }}  \n\n📊 Data telah tersimpan ke Google Sheets!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        2016
+      ],
+      "id": "a0202431-9749-4007-bd17-fdd332af7672",
+      "name": "Send a text message3",
+      "webhookId": "4fa65b64-9dd8-4e35-a1ce-b66598e2727e",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "🤖 Bantuan Cara Mengirim Pesan\n\n📸 Kirim foto barang → Penjelasan Singkat\n✍️ Beri Pertanyaan → \"/faq dimana lokasi bengkel\"\n📊 Mau Booking → \"/booking nama rehan servis ban besok jam 1 siang\"\n\n💡 Command:\n• /faq - Untuk Menanyakan Sesuatu Terkait Bengkel\n• /booking - Untuk Melakukan Booking Servis\n• /help - Panduan ini\n\nSilakan Tanyakan Apa Saja !!! 🚀",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        2208
+      ],
+      "id": "5779614b-1d93-4416-b869-4e7ada5ec6f0",
+      "name": "Send a text message4",
+      "webhookId": "f432c318-e313-44fd-a87b-7be12afb0b14",
+      "credentials": {
+        "telegramApi": {
+          "id": "rdSEQMnJTfnmQI7w",
+          "name": "FAQ"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data_Bengkel": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "66454a0d-84cc-43c1-9f56-2bb174130c88",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f720b8c94433bbf6f8300c0af8c166078b9a1f94f7818df83f7a37509e95263b"
+  },
+  "id": "97f9iGG6vOPu1QX4",
+  "tags": []
+}
